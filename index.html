@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vidya Bharti Tutorials</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --board: #1F3A2E; --board-dark: #16281F; --chalk: #F3EEE1; --paper: #FFFDF8;
+    --ink: #22301F; --marigold: #E8A33D; --slate: #34506B; --danger: #B3432B; --line: #E4DDC9;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--ink); background: var(--chalk); }
+  .mono { font-family: 'Courier New', monospace; }
+  .hidden { display: none !important; }
+
+  /* Login */
+  .login-wrap { min-height: 100vh; display: flex; flex-direction: column; }
+  @media (min-width: 860px) { .login-wrap { flex-direction: row; } }
+  .login-board { background: radial-gradient(circle at 20% 20%, var(--board), var(--board-dark)); color: var(--chalk); padding: 48px 32px; flex: 1.1; display:flex; flex-direction:column; justify-content:center; }
+  .board-title { font-family: Georgia, serif; font-size: clamp(26px,4vw,40px); margin:0; }
+  .board-rule { width:84px; height:3px; background:var(--marigold); margin:14px 0; border-radius:2px; }
+  .board-sub { font-size:14px; opacity:.85; text-transform:uppercase; letter-spacing:1px; margin:0 0 18px; }
+  .login-card-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:32px 18px; }
+  .login-card { background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:28px; width:100%; max-width:380px; box-shadow:0 12px 32px rgba(31,58,46,.08); }
+  .login-card h2 { font-family:Georgia,serif; margin:0 0 16px; font-size:20px; }
+  .login-card label { font-size:13px; font-weight:600; display:flex; flex-direction:column; gap:6px; color:#55503f; margin-bottom:12px; }
+  .login-card input { border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:14px; width:100%; }
+  .btn-primary { background:var(--board); color:var(--chalk); border:none; border-radius:8px; padding:11px 16px; font-weight:600; font-size:14px; cursor:pointer; width:100%; }
+  .form-error { background:#FBE9E4; color:var(--danger); font-size:13px; padding:8px 10px; border-radius:6px; margin-bottom:10px; }
+  .form-msg { background:#E9F3EE; color:var(--board); font-size:13px; padding:8px 10px; border-radius:6px; margin-bottom:10px; }
+
+  /* Portal */
+  .topbar { background:var(--board); color:var(--chalk); display:flex; align-items:center; justify-content:space-between; padding:14px 20px; position:sticky; top:0; z-index:10; }
+  .topbar-title { font-family:Georgia,serif; font-weight:700; font-size:16px; }
+  .topbar-sub { font-size:11px; opacity:.75; }
+  .btn-ghost { background:rgba(243,238,225,.1); color:var(--chalk); border:1px solid rgba(243,238,225,.25); border-radius:7px; padding:7px 12px; font-size:13px; cursor:pointer; margin-left:6px; }
+  .main { max-width:920px; margin:0 auto; padding:24px 18px 60px; }
+  .welcome { font-family:Georgia,serif; font-size:22px; margin:4px 0 18px; }
+  .nav-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+  .nav-card { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:16px; cursor:pointer; text-align:left; font-size:15px; font-weight:700; }
+  .nav-card small { display:block; font-weight:400; font-size:12px; color:#7a7360; margin-top:2px; }
+  .section-block { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .section-heading { font-family:Georgia,serif; font-size:19px; border-bottom:2px solid var(--marigold); padding-bottom:8px; display:inline-block; margin:0 0 14px; }
+  table.ledger { width:100%; border-collapse:collapse; font-size:14px; }
+  table.ledger th { text-align:left; font-size:11px; text-transform:uppercase; color:#7a7360; border-bottom:2px solid var(--line); padding:6px 8px; }
+  table.ledger td { padding:8px; border-bottom:1px solid var(--line); }
+  .notice-card { background:#FFFCF4; border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:12px; }
+  .notice-title { font-weight:700; margin-bottom:4px; }
+  .notice-meta { font-size:11px; color:#9a927a; margin-bottom:6px; }
+  .material-item { display:flex; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; margin-bottom:6px; text-decoration:none; color:var(--ink); }
+  .gallery-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .gallery-item img { width:100%; height:110px; object-fit:cover; border-radius:8px; border:1px solid var(--line); }
+  .btn-back { background:none; border:1px solid var(--line); border-radius:7px; padding:6px 12px; font-size:13px; cursor:pointer; margin-bottom:16px; }
+
+  /* Admin */
+  .admin-body { display:flex; max-width:1000px; margin:0 auto; gap:16px; padding:20px 16px 60px; flex-wrap:wrap; }
+  .admin-tabs { display:flex; gap:6px; overflow-x:auto; width:100%; }
+  .admin-tabs button { border:none; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:13px; white-space:nowrap; cursor:pointer; }
+  .admin-tabs button.active { background:var(--board); color:var(--chalk); }
+  .admin-content { flex:1; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; width:100%; }
+  .admin-form input, .admin-form select, .admin-form textarea { width:100%; border:1px solid var(--line); border-radius:7px; padding:9px; font-size:13.5px; margin-bottom:8px; font-family:inherit; }
+  .admin-list li { display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid var(--line); padding:8px 0; font-size:13.5px; list-style:none; }
+  .admin-list { padding:0; margin:0 0 20px; }
+  .btn-small { background:var(--slate); color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer; }
+  .btn-danger { background:var(--danger); color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer; }
+  .loading { padding:40px; text-align:center; color:#7a7360; }
+</style>
+</head>
+<body>
+
+<!-- ============ CONFIG: paste your Supabase values here ============ -->
+<script>
+  const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
+</script>
+<!-- ==================================================================== -->
+
+<div id="app"><div class="loading">Loading…</div></div>
+
+<script>
+window.onerror = function(msg, url, line, col, err){
+  document.getElementById('app').innerHTML =
+    '<div style="padding:24px;font-family:monospace;font-size:13px;background:#FBE9E4;color:#B3432B;white-space:pre-wrap;">DEBUG ERROR:\n' +
+    msg + '\n(line ' + line + ')</div>';
+};
+
+let supabase;
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch(e) {
+  document.getElementById('app').innerHTML =
+    '<div style="padding:24px;font-family:monospace;font-size:13px;background:#FBE9E4;color:#B3432B;white-space:pre-wrap;">DEBUG ERROR creating client:\n' + e.message + '</div>';
+}
+const app = document.getElementById('app');
+let currentUser = null;   // supabase auth user
+let currentProfile = null; // row from profiles table
+
+function esc(s){ return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function grade(pct){ if(pct>=90)return "A1"; if(pct>=80)return "A2"; if(pct>=70)return "B1"; if(pct>=60)return "B2"; if(pct>=50)return "C1"; return "D"; }
+
+async function init(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if(session){
+    currentUser = session.user;
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    currentProfile = profile;
+    if(profile && profile.role === 'admin') renderAdmin();
+    else if(profile) renderStudentHome();
+    else renderLogin("Your account has no profile yet. Contact your admin.");
+  } else {
+    renderLogin();
+  }
+}
+
+function renderLogin(msg){
+  app.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-board">
+        <h1 class="board-title">Vidya Bharti Tutorials</h1>
+        <div class="board-rule"></div>
+        <p class="board-sub">CBSE • Classes V–XII</p>
+      </div>
+      <div class="login-card-wrap">
+        <div class="login-card">
+          <h2>Log in</h2>
+          ${msg ? `<div class="form-error">${esc(msg)}</div>` : ''}
+          <div id="loginError"></div>
+          <label>Email
+            <input type="email" id="loginEmail" placeholder="you@example.com" />
+          </label>
+          <label>Password
+            <input type="password" id="loginPassword" placeholder="Password" />
+          </label>
+          <button class="btn-primary" id="loginBtn">Log in</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('loginBtn').onclick = doLogin;
+}
+
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errBox = document.getElementById('loginError');
+  errBox.innerHTML = '';
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if(error){
+    errBox.innerHTML = `<div class="form-error">${esc(error.message)}</div>`;
+    return;
+  }
+  currentUser = data.user;
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+  currentProfile = profile;
+  if(profile && profile.role === 'admin') renderAdmin();
+  else if(profile) renderStudentHome();
+  else renderLogin("Your account has no profile yet. Contact your admin.");
+}
+
+async function logout(){
+  await supabase.auth.signOut();
+  currentUser = null; currentProfile = null;
+  renderLogin();
+}
+
+function topbar(title, sub, showHome, homeFn){
+  return `
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">${esc(title)}</div>
+        ${sub ? `<div class="topbar-sub">${esc(sub)}</div>` : ''}
+      </div>
+      <div>
+        ${showHome ? `<button class="btn-ghost" onclick="window.__home()">Home</button>` : ''}
+        <button class="btn-ghost" onclick="window.__logout()">Log out</button>
+      </div>
+    </div>
+  `;
+}
+window.__logout = logout;
+
+function renderStudentHome(){
+  window.__home = renderStudentHome;
+  app.innerHTML = topbar("Vidya Bharti Tutorials", `${currentProfile.full_name} · Class ${currentProfile.class || ''}${currentProfile.section || ''}`, false) + `
+    <div class="main">
+      <h2 class="welcome">Welcome back, ${esc(currentProfile.full_name.split(' ')[0])}</h2>
+      <div class="nav-grid">
+        <button class="nav-card" onclick="window.__section('results')">Results<small>Test scores & grades</small></button>
+        <button class="nav-card" onclick="window.__section('attendance')">Attendance<small>Monthly record</small></button>
+        <button class="nav-card" onclick="window.__section('notices')">Notices<small>From your teachers</small></button>
+        <button class="nav-card" onclick="window.__section('material')">Study Material<small>Subject-wise PDFs</small></button>
+        <button class="nav-card" onclick="window.__section('gallery')">Gallery<small>Institute moments</small></button>
+        <button class="nav-card" onclick="window.__section('about')">About Us<small>Our institute</small></button>
+        <button class="nav-card" onclick="window.__section('contact')">Contact<small>Reach & find us</small></button>
+      </div>
+    </div>
+  `;
+}
+
+window.__section = async (key) => {
+  const body = document.querySelector('.main') || app;
+  app.innerHTML = topbar("Vidya Bharti Tutorials", currentProfile.full_name, true) + `<div class="main"><button class="btn-back" onclick="window.__home()">← Back</button><div id="sectionBody" class="loading">Loading…</div></div>`;
+  const box = document.getElementById('sectionBody');
+
+  if(key === 'results'){
+    const { data } = await supabase.from('results').select('*').eq('student_id', currentUser.id).order('test_date', {ascending:false});
+    box.innerHTML = `<div class="section-block"><h3 class="section-heading">Results</h3>` +
+      (!data || data.length===0 ? `<p>No results posted yet.</p>` :
+      `<table class="ledger"><thead><tr><th>Test</th><th>Subject</th><th>Marks</th><th>%</th><th>Grade</th><th>Date</th></tr></thead><tbody>` +
+      data.map(r=>{ const pct=Math.round((r.marks/r.max_marks)*100); return `<tr><td>${esc(r.test_name)}</td><td>${esc(r.subject)}</td><td class="mono">${r.marks}/${r.max_marks}</td><td class="mono">${pct}%</td><td>${grade(pct)}</td><td class="mono">${r.test_date}</td></tr>`; }).join('') +
+      `</tbody></table>`) + `</div>`;
+  }
+  else if(key === 'attendance'){
+    const { data } = await supabase.from('attendance').select('*').eq('student_id', currentUser.id);
+    box.innerHTML = `<div class="section-block"><h3 class="section-heading">Attendance</h3>` +
+      (!data || data.length===0 ? `<p>No attendance recorded yet.</p>` :
+      data.map(a=>{ const pct=Math.round((a.present/a.total)*100); return `<div style="margin-bottom:10px;"><strong>${esc(a.month)}</strong> — <span class="mono">${a.present}/${a.total} (${pct}%)</span></div>`; }).join('')) + `</div>`;
+  }
+  else if(key === 'notices'){
+    const { data } = await supabase.from('notices').select('*').order('created_at', {ascending:false});
+    box.innerHTML = `<div class="section-block"><h3 class="section-heading">Notices</h3>` +
+      (!data || data.length===0 ? `<p>No notices yet.</p>` :
+      data.map(n=>`<div class="notice-card"><div class="notice-meta">${esc(new Date(n.created_at).toLocaleDateString())} — ${esc(n.posted_by)}</div><div class="notice-title">${esc(n.title)}</div><div>${esc(n.body)}</div></div>`).join('')) + `</div>`;
+  }
+  else if(key === 'material'){
+    const { data } = await supabase.from('study_material').select('*').order('subject');
+    box.innerHTML = `<div class="section-block"><h3 class="section-heading">Study Material</h3>` +
+      (!data || data.length===0 ? `<p>No material uploaded yet.</p>` :
+      data.map(m=>`<a class="material-item" href="${esc(m.url)}" target="_blank">${esc(m.title)} — Class ${esc(m.class)}, ${esc(m.subject)}</a>`).join('')) + `</div>`;
+  }
+  else if(key === 'gallery'){
+    const { data } = await supabase.from('gallery').select('*').order('created_at', {ascending:false});
+    box.innerHTML = `<div class="section-block"><h3 class="section-heading">Gallery</h3><div class="gallery-grid">` +
+      (!data || data.length===0 ? `<p>No photos yet.</p>` :
+      data.map(g=>`<div class="gallery-item"><img src="${esc(g.url)}" alt="${esc(g.caption)}" /></div>`).join('')) + `</div></div>`;
+  }
+  else if(key === 'about'){
+    const { data } = await supabase.from('settings').select('*').eq('key','about').single();
+    box.innerHTML = `<div class="section-block"><h3 class="section-heading">About Us</h3><p>${esc(data ? data.value : '')}</p></div>`;
+  }
+  else if(key === 'contact'){
+    const { data } = await supabase.from('settings').select('*');
+    const s = {}; (data||[]).forEach(r => s[r.key] = r.value);
+    box.innerHTML = `<div class="section-block"><h3 class="section-heading">Contact & Location</h3>
+      <p>📞 ${esc(s.phone)}</p><p>✉️ ${esc(s.email)}</p><p>📍 ${esc(s.address)}</p>
+      <a class="btn-primary" style="display:inline-block;width:auto;text-decoration:none;" href="${esc(s.map_url)}" target="_blank">Open in Google Maps</a>
+      </div>`;
+  }
+};
+
+// ================= ADMIN =================
+function renderAdmin(){
+  window.__home = renderAdmin;
+  app.innerHTML = topbar("Admin Panel", "Vidya Bharti Tutorials", false) + `
+    <div class="admin-body">
+      <div class="admin-tabs">
+        <button data-t="notices" class="active">Notices</button>
+        <button data-t="results">Results</button>
+        <button data-t="attendance">Attendance</button>
+        <button data-t="material">Study Material</button>
+        <button data-t="gallery">Gallery</button>
+        <button data-t="students">Students</button>
+        <button data-t="about">About</button>
+        <button data-t="contact">Contact</button>
+      </div>
+      <div class="admin-content" id="adminContent"><div class="loading">Loading…</div></div>
+    </div>
+  `;
+  document.querySelectorAll('.admin-tabs button').forEach(btn=>{
+    btn.onclick = () => {
+      document.querySelectorAll('.admin-tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      loadAdminTab(btn.dataset.t);
+    };
+  });
+  loadAdminTab('notices');
+}
+
+async function loadAdminTab(tab){
+  const box = document.getElementById('adminContent');
+  box.innerHTML = `<div class="loading">Loading…</div>`;
+
+  if(tab === 'notices'){
+    const { data } = await supabase.from('notices').select('*').order('created_at',{ascending:false});
+    box.innerHTML = `
+      <h3>Post a Notice</h3>
+      <div class="admin-form">
+        <input id="nTitle" placeholder="Title" />
+        <textarea id="nBody" placeholder="Notice text" rows="3"></textarea>
+        <input id="nBy" placeholder="Posted by (e.g. Mrs. Kapoor)" />
+        <button class="btn-primary" id="nAdd">Post notice</button>
+      </div>
+      <h3>Existing Notices</h3>
+      <ul class="admin-list">${(data||[]).map(n=>`<li><div><strong>${esc(n.title)}</strong><br><small>${esc(n.body)}</small></div><button class="btn-danger" data-id="${n.id}">Delete</button></li>`).join('')}</ul>
+    `;
+    document.getElementById('nAdd').onclick = async ()=>{
+      const title=document.getElementById('nTitle').value.trim();
+      const body=document.getElementById('nBody').value.trim();
+      const postedBy=document.getElementById('nBy').value.trim();
+      if(!title||!body||!postedBy) return alert('Fill all fields');
+      await supabase.from('notices').insert({title, body, posted_by: postedBy});
+      loadAdminTab('notices');
+    };
+    box.querySelectorAll('button[data-id]').forEach(b=> b.onclick = async ()=>{ await supabase.from('notices').delete().eq('id', b.dataset.id); loadAdminTab('notices'); });
+  }
+
+  else if(tab === 'students'){
+    const { data } = await supabase.from('profiles').select('*').eq('role','student').order('full_name');
+    box.innerHTML = `
+      <h3>Students</h3>
+      <p style="font-size:13px;color:#7a7360;">To add a new student: create their login in Supabase → Authentication → Users, copy their UID, then add a row here with that UID.</p>
+      <div class="admin-form">
+        <input id="sUid" placeholder="Student UID (from Supabase Auth)" />
+        <input id="sName" placeholder="Full name" />
+        <input id="sCls" placeholder="Class (e.g. X)" />
+        <input id="sSec" placeholder="Section (e.g. A)" />
+        <button class="btn-primary" id="sAdd">Add student profile</button>
+      </div>
+      <ul class="admin-list">${(data||[]).map(s=>`<li><div><strong>${esc(s.full_name)}</strong> — Class ${esc(s.class)}${esc(s.section)}</div></li>`).join('')}</ul>
+    `;
+    document.getElementById('sAdd').onclick = async ()=>{
+      const id=document.getElementById('sUid').value.trim();
+      const full_name=document.getElementById('sName').value.trim();
+      const cls=document.getElementById('sCls').value.trim();
+      const section=document.getElementById('sSec').value.trim();
+      if(!id||!full_name) return alert('UID and name required');
+      const { error } = await supabase.from('profiles').insert({id, full_name, role:'student', class:cls, section});
+      if(error) return alert(error.message);
+      loadAdminTab('students');
+    };
+  }
+
+  else if(tab === 'results'){
+    const { data: students } = await supabase.from('profiles').select('*').eq('role','student').order('full_name');
+    box.innerHTML = `
+      <h3>Add a Result</h3>
+      <div class="admin-form">
+        <select id="rStudent">${(students||[]).map(s=>`<option value="${s.id}">${esc(s.full_name)} — Class ${esc(s.class)}${esc(s.section)}</option>`).join('')}</select>
+        <input id="rTest" placeholder="Test name" />
+        <input id="rSubject" placeholder="Subject" />
+        <input id="rMarks" type="number" placeholder="Marks obtained" />
+        <input id="rMax" type="number" placeholder="Max marks" />
+        <button class="btn-primary" id="rAdd">Add result</button>
+      </div>
+    `;
+    document.getElementById('rAdd').onclick = async ()=>{
+      const student_id=document.getElementById('rStudent').value;
+      const test_name=document.getElementById('rTest').value.trim();
+      const subject=document.getElementById('rSubject').value.trim();
+      const marks=Number(document.getElementById('rMarks').value);
+      const max_marks=Number(document.getElementById('rMax').value);
+      if(!student_id||!test_name||!subject||!marks||!max_marks) return alert('Fill all fields');
+      await supabase.from('results').insert({student_id, test_name, subject, marks, max_marks});
+      alert('Result added');
+    };
+  }
+
+  else if(tab === 'attendance'){
+    const { data: students } = await supabase.from('profiles').select('*').eq('role','student').order('full_name');
+    box.innerHTML = `
+      <h3>Record Monthly Attendance</h3>
+      <div class="admin-form">
+        <select id="aStudent">${(students||[]).map(s=>`<option value="${s.id}">${esc(s.full_name)}</option>`).join('')}</select>
+        <input id="aMonth" placeholder="Month (e.g. July 2026)" />
+        <input id="aPresent" type="number" placeholder="Days present" />
+        <input id="aTotal" type="number" placeholder="Total working days" />
+        <button class="btn-primary" id="aAdd">Save attendance</button>
+      </div>
+    `;
+    document.getElementById('aAdd').onclick = async ()=>{
+      const student_id=document.getElementById('aStudent').value;
+      const month=document.getElementById('aMonth').value.trim();
+      const present=Number(document.getElementById('aPresent').value);
+      const total=Number(document.getElementById('aTotal').value);
+      if(!student_id||!month||!present||!total) return alert('Fill all fields');
+      await supabase.from('attendance').upsert({student_id, month, present, total}, {onConflict:'student_id,month'});
+      alert('Attendance saved');
+    };
+  }
+
+  else if(tab === 'material'){
+    const { data } = await supabase.from('study_material').select('*').order('subject');
+    box.innerHTML = `
+      <h3>Add Study Material</h3>
+      <div class="admin-form">
+        <input id="mCls" placeholder="Class (e.g. X)" />
+        <input id="mSubject" placeholder="Subject" />
+        <input id="mTitle" placeholder="Title" />
+        <input id="mUrl" placeholder="PDF / Drive link" />
+        <button class="btn-primary" id="mAdd">Add material</button>
+      </div>
+      <ul class="admin-list">${(data||[]).map(m=>`<li><div><strong>${esc(m.title)}</strong> — ${esc(m.class)}, ${esc(m.subject)}</div><button class="btn-danger" data-id="${m.id}">Delete</button></li>`).join('')}</ul>
+    `;
+    document.getElementById('mAdd').onclick = async ()=>{
+      const cls=document.getElementById('mCls').value.trim();
+      const subject=document.getElementById('mSubject').value.trim();
+      const title=document.getElementById('mTitle').value.trim();
+      const url=document.getElementById('mUrl').value.trim();
+      if(!cls||!subject||!title||!url) return alert('Fill all fields');
+      await supabase.from('study_material').insert({class:cls, subject, title, url});
+      loadAdminTab('material');
+    };
+    box.querySelectorAll('button[data-id]').forEach(b=> b.onclick = async ()=>{ await supabase.from('study_material').delete().eq('id', b.dataset.id); loadAdminTab('material'); });
+  }
+
+  else if(tab === 'gallery'){
+    const { data } = await supabase.from('gallery').select('*').order('created_at',{ascending:false});
+    box.innerHTML = `
+      <h3>Add to Gallery</h3>
+      <div class="admin-form">
+        <input id="gUrl" placeholder="Image URL" />
+        <input id="gCaption" placeholder="Caption" />
+        <button class="btn-primary" id="gAdd">Add photo</button>
+      </div>
+      <div class="gallery-grid">${(data||[]).map(g=>`<div class="gallery-item"><img src="${esc(g.url)}"/><button class="btn-danger" data-id="${g.id}" style="margin-top:4px;">Delete</button></div>`).join('')}</div>
+    `;
+    document.getElementById('gAdd').onclick = async ()=>{
+      const url=document.getElementById('gUrl').value.trim();
+      const caption=document.getElementById('gCaption').value.trim();
+      if(!url) return alert('Image URL required');
+      await supabase.from('gallery').insert({type:'photo', url, caption});
+      loadAdminTab('gallery');
+    };
+    box.querySelectorAll('button[data-id]').forEach(b=> b.onclick = async ()=>{ await supabase.from('gallery').delete().eq('id', b.dataset.id); loadAdminTab('gallery'); });
+  }
+
+  else if(tab === 'about'){
+    const { data } = await supabase.from('settings').select('*').eq('key','about').single();
+    box.innerHTML = `<h3>Edit "About Us"</h3><div class="admin-form"><textarea id="aboutText" rows="6">${esc(data ? data.value : '')}</textarea><button class="btn-primary" id="aboutSave">Save changes</button></div>`;
+    document.getElementById('aboutSave').onclick = async ()=>{
+      await supabase.from('settings').update({value: document.getElementById('aboutText').value}).eq('key','about');
+      alert('Saved');
+    };
+  }
+
+  else if(tab === 'contact'){
+    const { data } = await supabase.from('settings').select('*');
+    const s = {}; (data||[]).forEach(r => s[r.key]=r.value);
+    box.innerHTML = `
+      <h3>Edit Contact Details</h3>
+      <div class="admin-form">
+        <input id="cPhone" placeholder="Phone" value="${esc(s.phone)}" />
+        <input id="cEmail" placeholder="Email" value="${esc(s.email)}" />
+        <input id="cAddress" placeholder="Address" value="${esc(s.address)}" />
+        <input id="cMap" placeholder="Google Maps link" value="${esc(s.map_url)}" />
+        <button class="btn-primary" id="cSave">Save changes</button>
+      </div>
+    `;
+    document.getElementById('cSave').onclick = async ()=>{
+      await supabase.from('settings').update({value: document.getElementById('cPhone').value}).eq('key','phone');
+      await supabase.from('settings').update({value: document.getElementById('cEmail').value}).eq('key','email');
+      await supabase.from('settings').update({value: document.getElementById('cAddress').value}).eq('key','address');
+      await supabase.from('settings').update({value: document.getElementById('cMap').value}).eq('key','map_url');
+      alert('Saved');
+    };
+  }
+}
+
+window.addEventListener('unhandledrejection', function(ev){
+  document.getElementById('app').innerHTML =
+    '<div style="padding:24px;font-family:monospace;font-size:13px;background:#FBE9E4;color:#B3432B;white-space:pre-wrap;">DEBUG PROMISE ERROR:\n' +
+    (ev.reason && ev.reason.message ? ev.reason.message : JSON.stringify(ev.reason)) + '</div>';
+});
+
+init().catch(function(e){
+  document.getElementById('app').innerHTML =
+    '<div style="padding:24px;font-family:monospace;font-size:13px;background:#FBE9E4;color:#B3432B;white-space:pre-wrap;">DEBUG INIT ERROR:\n' + e.message + '</div>';
+});
+</script>
+</body>
+</html>
