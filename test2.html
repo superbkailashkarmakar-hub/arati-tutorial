@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><title>Supabase Test</title></head>
+<body>
+<h1 id="result" style="font-family:sans-serif;padding:40px;">Testing...</h1>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+setTimeout(function(){
+  const el = document.getElementById('result');
+  if (typeof window.supabase === 'undefined') {
+    el.innerText = 'FAIL: Supabase library did not load (window.supabase is undefined).';
+    el.style.color = 'red';
+  } else {
+    try {
+      const client = window.supabase.createClient('https://svetuphqaoswxoedlwof.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2ZXR1cGhxYW9zd3hvZWRsd29mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyNzc0MDAsImV4cCI6MjA2Njg1MzQwMH0.tDS_uKO7vtJldRWRtpdcghfcSxUKQnVwrZOCnjz8Irk');
+      el.innerText = 'Library loaded OK. Now testing connection...';
+      client.auth.getSession().then(function(res){
+        el.innerText = 'SUCCESS: Full connection to Supabase worked! ' + JSON.stringify(res.data);
+        el.style.color = 'green';
+      }).catch(function(e){
+        el.innerText = 'FAIL at getSession: ' + e.message;
+        el.style.color = 'red';
+      });
+    } catch(e) {
+      el.innerText = 'FAIL creating client: ' + e.message;
+      el.style.color = 'red';
+    }
+  }
+}, 3000);
+</script>
+</body>
+</html>
