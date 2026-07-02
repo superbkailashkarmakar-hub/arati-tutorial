@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Structure Test</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<script>
+window.SUPABASE_URL = "https://svetuphqaoswxoedlwof.supabase.co";
+window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2ZXR1cGhxYW9zd3hvZWRsd29mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyNzc0MDAsImV4cCI6MjA2Njg1MzQwMH0.tDS_uKO7vtJldRWRtpdcghfcSxUKQnVwrZOCnjz8Irk";
+</script>
+
+<div id="app"><div id="loadingtext">Loading...</div></div>
+
+<script>
+setTimeout(function(){
+  if (typeof window.supabase === 'undefined') {
+    document.getElementById('app').innerHTML = 'FAIL: library never loaded (6s check)';
+  }
+}, 6000);
+</script>
+
+<script>
+window.onerror = function(msg, url, line, col, err){
+  document.getElementById('app').innerHTML = 'WINDOW ONERROR: ' + msg + ' (line ' + line + ')';
+};
+
+let supabase;
+try {
+  supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  document.getElementById('loadingtext').innerText = 'Client created OK, now calling init()...';
+} catch(e) {
+  document.getElementById('app').innerHTML = 'FAIL creating client: ' + e.message;
+}
+
+async function init(){
+  document.getElementById('loadingtext').innerText = 'Inside init(), about to call getSession()...';
+  const { data: { session } } = await supabase.auth.getSession();
+  document.getElementById('app').innerHTML = 'SUCCESS: init() completed. session=' + JSON.stringify(session);
+}
+
+init().catch(function(e){
+  document.getElementById('app').innerHTML = 'INIT CATCH ERROR: ' + e.message;
+});
+</script>
+
+</body>
+</html>
